@@ -11,10 +11,15 @@ const long long INF = 1LL << 60;
 
 std::chrono::system_clock::time_point  start, end;
 double start_temp, end_temp;
+uint32_t xor64(void) {
+  static uint64_t x = 88172645463325252ULL;
+  x = x ^ (x << 13); x = x ^ (x >> 7);
+  return x = x ^ (x << 17);
+}
 void solve()
 {
-	start_temp = 0.1;
-	end_temp = 0.001;
+	start_temp = 0.01;
+	end_temp = 0.0001;
 	std::mt19937 kkt(89);
 	int _, m; cin >> _ >> m;
 	const int n = 20;
@@ -24,15 +29,16 @@ void solve()
 		cin >> vs[i];
 	}
 	std::vector<std::pair<std::string, std::vector<int>>> a;
-	std::vector<int> r, gomi, used(m), nr;
+	std::vector<int> r, gomi, nr, v;
+	std::string s;
+	std::vector<char> used(m);
 	for (int i = 0; i < m; ++i)
 	{
 		r.emplace_back(i);
 	}
 	while (not r.empty() and (int)a.size() < n)
 	{
-		std::string s;
-		std::vector<int> v;
+		v.clear();
 		std::shuffle(r.begin(), r.end(), kkt);
 		s = vs[r[0]];
 		v.emplace_back(r[0]);
@@ -90,18 +96,17 @@ void solve()
 		const double time = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
 		if(time > deadline)
 			break;
-		int h = rnd() % n;
+		int h = xor64() % n;
 		nr = r;
 		for(const auto &e : a[h].second)
 		{
 			nr.emplace_back(e);
 		}
 		std::shuffle(nr.begin(), nr.end(), kkt);
-		std::string s;
-		std::vector<int> v;
+		v.clear();
 		s = vs[nr[0]];
 		v.emplace_back(nr[0]);
-		for (int jupi = 1; jupi < (int)r.size(); jupi++)
+		for (int jupi = 1; jupi < (int)nr.size(); jupi++)
 		{
 			const std::string &t = vs[nr[jupi]];
 			for (int i = 0; i < (int)s.size(); ++i)
@@ -142,11 +147,11 @@ void solve()
 		for(const auto &e : gomi)
 			v.emplace_back(e);
 		gomi.clear();
-		const int score = (int)v.size() - a[h].second.size();
+		const int score = (int)v.size() - (int)a[h].second.size();
 		const double temp = start_temp + (end_temp - start_temp) * time / deadline;
-		const double prob = exp(score / temp);
+		const double prob = std::exp((double)score / temp);
 
-		if(prob > (kkt() % inf) / (double)inf)
+		if(prob > (xor64() % inf) / (double)inf)
 		{
 			for(const auto &e : a[h].second)
 			{
