@@ -29,10 +29,10 @@ uint32_t xor64(void) {
 
 template <class T> struct RollingHash {
 	std::vector<ull> hash, pows;
-	ull base;
+	const ull base = 1206;
 	static constexpr ull mod = 1000000009;
-	RollingHash(const T &a, ull base)
-		: hash(a.size() + 1), pows(a.size() + 1, 1), base(base) {
+	RollingHash(const T &a)
+		: hash(a.size() + 1), pows(a.size() + 1, 1) {
 		for (int i = 0; i < (int)a.size(); i++) {
 			pows[i + 1] = pows[i] * base % mod;
 			hash[i + 1] = hash[i] * base % mod + a[i];
@@ -67,18 +67,17 @@ template <class T> struct RollingHash {
 void solve()
 {
 	start_temp = 0.1;
-	end_temp = 0.001;
+	end_temp = 0.00001;
 	std::mt19937 kkt(89);
 	int _, m; cin >> _ >> m;
 	const int n = 20;
 	std::vector<std::string> vs(m);
 	std::vector<RollingHash<std::string>> hash;
 	hash.reserve(m);
-	const ull base = 1206;
 	for (int i = 0; i < m; ++i)
 	{
 		cin >> vs[i];
-		hash.emplace_back(RollingHash<std::string>(vs[i], base));
+		hash.emplace_back(RollingHash<std::string>(vs[i]));
 	}
 	std::vector<std::vector<int>> a;
 	std::vector<int> r, gomi, nr, v, sv;
@@ -144,7 +143,7 @@ void solve()
 		a.emplace_back(v);
 	}
 	const double deadline = 2950;
-	while(true)
+	for (int jupi_loves_kkt = 0;; jupi_loves_kkt++)
 	{
 		end = std::chrono::system_clock::now();
 		const double time = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
@@ -168,12 +167,14 @@ void solve()
 		v.emplace_back(nr[0]);
 		for (int jupi = 1; jupi < (int)nr.size(); jupi++)
 		{
+			if(sl == n)
+				break;
 			const std::string &t = vs[nr[jupi]];
 			for (const auto &i : pos[t[0] - 'A'])
 			{
 				const int len = std::min(sl - i, (int)t.size());
 				if(sl + (int)t.size() - len > n)
-					continue;
+					break;
 				if(h.get(i, i + len) == hash[nr[jupi]].get(0, len))
 				{
 					for (int j = 0; j < (int)t.size() - len; j++)
@@ -196,8 +197,10 @@ void solve()
 			{
 				const std::string &t = vs[e];
 				bool in = false;
-				for (int i = 0; i <= sl - (int)t.size(); ++i)
+				for (const auto &i : pos[t[0] - 'A'])
 				{
+					if(i + (int)t.size() > sl)
+						break;
 					if(h.get(i, i + (int)t.size()) == hash[e].get(0, (int)t.size()))
 					{
 						in = true;
