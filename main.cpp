@@ -12,6 +12,15 @@ const long long INF = 1LL << 60;
 
 std::chrono::system_clock::time_point  start, end;
 double start_temp, end_temp;
+std::vector<int> pos[8];
+
+void pos_init()
+{
+	for (int i = 0; i < 8; ++i)
+	{
+		pos[i].clear();
+	}
+}
 uint32_t xor64(void) {
   static uint64_t x = 88172645463325252ULL;
   x = x ^ (x << 13); x = x ^ (x >> 7);
@@ -57,8 +66,8 @@ template <class T> struct RollingHash {
 
 void solve()
 {
-	start_temp = 1;
-	end_temp = 0.01;
+	start_temp = 0.1;
+	end_temp = 0.001;
 	std::mt19937 kkt(89);
 	int _, m; cin >> _ >> m;
 	const int n = 20;
@@ -71,9 +80,8 @@ void solve()
 		cin >> vs[i];
 		hash.emplace_back(RollingHash<std::string>(vs[i], base));
 	}
-	std::vector<std::pair<std::string, std::vector<int>>> a;
-	std::vector<int> r, gomi, nr, v;
-	std::string s;
+	std::vector<std::vector<int>> a;
+	std::vector<int> r, gomi, nr, v, sv;
 	
 	std::vector<char> used(m);
 	for (int i = 0; i < m; ++i)
@@ -84,21 +92,21 @@ void solve()
 	{
 		v.clear();
 		std::shuffle(r.begin(), r.end(), kkt);
-		s = vs[r[0]];
+		int sl = (int)vs[r[0]].size();
 		auto h = hash[r[0]];
 		v.emplace_back(r[0]);
 		used[r[0]] = true;
 		for (int jupi = 1; jupi < (int)r.size(); jupi++)
 		{
 			const std::string &t = vs[r[jupi]];
-			for (int i = 0; i < (int)s.size(); ++i)
+			for (int i = 0; i < sl; ++i)
 			{
-				const int len = std::min((int)s.size() - i, (int)t.size());
-				if((int)s.size() + (int)t.size() - len > n)
+				const int len = std::min(sl - i, (int)t.size());
+				if(sl + (int)t.size() - len > n)
 					continue;
 				if(h.get(i, i + len) == hash[r[jupi]].get(0, len))
 				{
-					s += t.substr(len, (int)t.size() - len);
+					sl += (int)t.size() - len;
 					h.concat(t.substr(len, (int)t.size() - len));
 					v.emplace_back(r[jupi]);
 					used[r[jupi]] = true;
@@ -112,7 +120,7 @@ void solve()
 			{
 				const std::string &t = vs[e];
 				bool in = false;
-				for (int i = 0; i <= (int)s.size() - (int)t.size(); ++i)
+				for (int i = 0; i <= sl - (int)t.size(); ++i)
 				{
 					if(h.get(i, i + (int)t.size()) == hash[e].get(0, (int)t.size()))
 					{
@@ -133,7 +141,7 @@ void solve()
 		}
 		std::swap(gomi, r);
 		gomi.clear();
-		a.emplace_back(std::make_pair(s, v));
+		a.emplace_back(v);
 	}
 	const double deadline = 2950;
 	while(true)
@@ -144,41 +152,51 @@ void solve()
 			break;
 		int high = xor64() % n;
 		nr = r;
-		for(const auto &e : a[high].second)
+		for(const auto &e : a[high])
 		{
 			nr.emplace_back(e);
 		}
 		std::shuffle(nr.begin(), nr.end(), kkt);
 		v.clear();
-		s = vs[nr[0]];
+		pos_init();
+		int sl = (int)vs[nr[0]].size();
+		for (int i = 0; i < (int)vs[nr[0]].size(); ++i)
+		{
+			pos[vs[nr[0]][i] - 'A'].emplace_back(i);
+		}
 		auto h = hash[nr[0]];
 		v.emplace_back(nr[0]);
 		for (int jupi = 1; jupi < (int)nr.size(); jupi++)
 		{
 			const std::string &t = vs[nr[jupi]];
-			for (int i = 0; i < (int)s.size(); ++i)
+			for (const auto &i : pos[t[0] - 'A'])
 			{
-				const int len = std::min((int)s.size() - i, (int)t.size());
-				if((int)s.size() + (int)t.size() - len > n)
+				const int len = std::min(sl - i, (int)t.size());
+				if(sl + (int)t.size() - len > n)
 					continue;
 				if(h.get(i, i + len) == hash[nr[jupi]].get(0, len))
 				{
-					s += t.substr(len, (int)t.size() - len);
+					for (int j = 0; j < (int)t.size() - len; j++)
+					{
+						pos[t[len + j] - 'A'].emplace_back(sl + j);
+					}
+					sl += (int)t.size() - len;
 					h.concat(t.substr(len, (int)t.size() - len));
 					v.emplace_back(nr[jupi]);
 					break;
 				}
 			}
 		}
-		std::sort(v.begin(), v.end());
+		sv = v;
+		std::sort(sv.begin(), sv.end());
 		gomi.clear();
 		for(const auto &e : nr)
 		{
-			if(not std::binary_search(v.begin(), v.end(), e))
+			if(not std::binary_search(sv.begin(), sv.end(), e))
 			{
 				const std::string &t = vs[e];
 				bool in = false;
-				for (int i = 0; i <= (int)s.size() - (int)t.size(); ++i)
+				for (int i = 0; i <= sl - (int)t.size(); ++i)
 				{
 					if(h.get(i, i + (int)t.size()) == hash[e].get(0, (int)t.size()))
 					{
@@ -195,13 +213,13 @@ void solve()
 		for(const auto &e : gomi)
 			v.emplace_back(e);
 		gomi.clear();
-		const int score = (int)v.size() - (int)a[high].second.size();
+		const int score = (int)v.size() - (int)a[high].size();
 		const double temp = start_temp + (end_temp - start_temp) * time / deadline;
 		const double prob = std::exp((double)score / temp);
 
 		if(prob > (xor64() % inf) / (double)inf)
 		{
-			for(const auto &e : a[high].second)
+			for(const auto &e : a[high])
 			{
 				used[e] = false;
 			}
@@ -215,15 +233,30 @@ void solve()
 				if(not used[e])
 					r.emplace_back(e);
 			}
-			a[high] = std::make_pair(s, v);
+			a[high] = v;
 		}
 	}
 	std::vector<std::vector<char>> res(n, std::vector<char>(n, '.'));
-	for (int i = 0; i < (int)a.size(); ++i)
+	for (int h = 0; h < (int)a.size(); ++h)
 	{
-		for (int j = 0; j < (int)a[i].first.size(); ++j)
+		const auto &v = a[h];
+		std::string s = vs[v[0]];
+		for (int jupi = 1; jupi < (int)v.size(); jupi++)
 		{
-			res[i][j] = a[i].first[j];
+			const std::string &t = vs[v[jupi]];
+			for (int i = 0; i < (int)s.size(); i++)
+			{
+				const int len = std::min((int)s.size() - i, (int)t.size());
+				if(s.substr(i, len) == t.substr(0, len))
+				{
+					s += t.substr(len, (int)t.size() - len);
+					break;
+				}
+			}
+		}
+		for (int i = 0; i < (int)s.size(); ++i)
+		{
+			res[h][i] = s[i];
 		}
 	}
 	for (int i = 0; i < n; ++i)
