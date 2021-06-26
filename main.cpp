@@ -30,13 +30,11 @@ uint32_t xor64(void) {
 template <class T> struct RollingHash {
 	std::vector<ull> hash, pows;
 	const ull base = 1206;
-	static constexpr ull mod = 1000000009;
 	RollingHash(const T &a)
 		: hash(a.size() + 1), pows(a.size() + 1, 1) {
 		for (int i = 0; i < (int)a.size(); i++) {
-			pows[i + 1] = pows[i] * base % mod;
-			hash[i + 1] = hash[i] * base % mod + a[i];
-			if (hash[i + 1] >= mod) hash[i + 1] -= mod;
+			pows[i + 1] = pows[i] * base;
+			hash[i + 1] = hash[i] * base + a[i];
 		}
 	}
 	// 現在の文字列のサイズ
@@ -44,8 +42,7 @@ template <class T> struct RollingHash {
 	// [l, r)
 	ull get(int l, int r) {
 		assert(l <= r);
-		ull ret = hash[r] + mod - hash[l] * pows[r - l] % mod;
-		if (ret >= mod) ret -= mod;
+		ull ret = hash[r] - hash[l] * pows[r - l];
 		return ret;
 	}
 	void concat(const T &b) {
@@ -53,9 +50,8 @@ template <class T> struct RollingHash {
 		pows.resize(n + m + 1);
 		hash.resize(n + m + 1);
 		for (int i = 0; i < m; i++) {
-			pows[n + i + 1] = pows[n + i] * base % mod;
-			hash[n + i + 1] = hash[n + i] * base % mod + b[i];
-			if (hash[n + i + 1] >= mod) hash[n + i + 1] -= mod;
+			pows[n + i + 1] = pows[n + i] * base;
+			hash[n + i + 1] = hash[n + i] * base + b[i];
 		}
 	}
 	void pop_back() {
@@ -66,7 +62,7 @@ template <class T> struct RollingHash {
 
 void solve()
 {
-	start_temp = 0.1;
+	start_temp = 0.5;
 	end_temp = 0.00001;
 	std::mt19937 kkt(89);
 	int _, m; cin >> _ >> m;
