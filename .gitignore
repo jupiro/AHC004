@@ -1,3 +1,5 @@
+
+
 # Prerequisites
 *.d
 
@@ -30,3 +32,11 @@
 *.exe
 *.out
 *.app
+
+#AHC
+in/
+out/
+.DS_Store
+*.svg
+*.txt
+*.html
