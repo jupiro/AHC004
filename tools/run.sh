@@ -64,7 +64,7 @@ done
 # 並列処理
 if [ $print_error = 0 ];
 then
-  seq -f '%04g' $st $en | xargs -t -n1 -P$procs -I{} bash -c "f2 {}"
+  seq -f '%04g' $st $en | xargs -n1 -P$procs -I{} bash -c "f2 {}"
   seq -f '%04g' $st $en | xargs -n1 -P$procs -I{} bash -c "f2 {}"
 else 
   seq -f '%04g' $st $en | xargs -t -n1 -P$procs -I{} bash -c "f1 {}"
